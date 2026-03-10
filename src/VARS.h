@@ -1,0 +1,13 @@
+#ifndef VARS.h
+#define VARS.h
+
+int DF9_FORWARD_SIGNAL = 1700;
+int DF9_STOP_SIGNAL = 1500;
+int DF9_BACKWARD_SIGNAL = 1300;
+int DF9_CONTROL_PIN = 9;
+
+int DSS_LOW_ANGLE = 0;
+int DSS_HIGH_ANGLE = 90;
+int DSS_CONTROL_PIN = 8;
+
+#endif
