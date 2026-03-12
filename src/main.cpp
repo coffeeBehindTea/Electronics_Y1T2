@@ -10,6 +10,11 @@ NAU7802 loadCell;
 Servo armServo;
 
 int ARM_LOW_ANGLE = 0;
+int fan_servo_state = 0; // 0 is upward, 1 is toward the cup
+int fan_motor_state = 0; // 0 is stopped, 1 is rotating
+bool monitor_switch = false;
+bool first_time_entry = true;
+unsigned long start_time;
 
 void setup()
 {
@@ -40,7 +45,7 @@ void setup()
   // Serial.println("[info] load cell initialized.");
 
   // Serial.println("[info] checking temperature sensor...");
-  // while (!tmp_sensor_connected(TMP_DATA_PIN))
+  // while (!tmp_sensor_connected())
   // {
   //   Serial.println("[error] temperature sensor not connected !");
   //   delay(500);
@@ -49,29 +54,52 @@ void setup()
 
   Serial.println("[info] checking arm servo...");
   armServo.attach(ARM_SERVO_CONTROL_PIN);
-  while (servo_connected(ARM_SERVO_FEEDBACK_PIN))
+  while (servo_connected())
   {
     Serial.println("[error] arm servo not connected !");
     delay(500);
   }
 
-  ARM_LOW_ANGLE = read_servo_angle(ARM_SERVO_FEEDBACK_PIN);
+  ARM_LOW_ANGLE = read_arm_servo_angle();
 
   Serial.println("[info] all components cheked.");
   Serial.println("[info] entering main loop.");
 }
 
+
 void loop()
 {
+  /* -------------------------------------------------------------------------- */
+  /*       linsten to the microphone here before the monitor switch check       */
+  /* -------------------------------------------------------------------------- */
+  
+  if (!monitor_switch)
+  {
+    return;
+  }
+  if (first_time_entry)
+  {
+    reset_drink_timer(start_time);
+    first_time_entry = false;
+  }
 
-  // if (loadCell.available())
-  // {
-  //   // 现在 getWeight() 就会自动除以系数，返回真正的“克”了
-  //   float weight = loadCell.getWeight();
+  // if cup leaved the mat, reset timer
+  while (! cup_exist(loadCell))
+  {
+    first_time_entry = true;
+    delay(100);
+  }
 
-  //   Serial.print("当前重量: ");
-  //   Serial.print(weight, 1); // 显示一位小数
-  //   Serial.println(" g");
-  // }
-  // delay(200);
+  check_temp_fan(fan_servo_state, fan_motor_state, ARM_LOW_ANGLE, armServo);
+
+  // just need to remid drink, as in the next loop, if the cup is taken, the wile loop will trap it and wait until cup being put back.
+  // also checked cup exist here because during check_temp_fan actions, the system do not take inputs, so if user take cup away during action,
+  // no reminding needed here.
+  if (check_drink_timer(start_time) && cup_exist(loadCell))
+  {
+    remind_drink();
+  }
+
+
+
 }
