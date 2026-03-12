@@ -9,6 +9,7 @@
 
 
 bool tmp_sensor_connected();
+float read_temp_sensor();
 
 float read_arm_servo_angle();
 void set_servo_angle(Servo &servo, float angle);
