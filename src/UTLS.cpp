@@ -1,6 +1,24 @@
 #include "UTLS.h"
 
 
+// return temperature sensor reading in float
+float read_temp_sensor()
+{
+    long sum = 0;
+
+    for (int i = 0; i < 10; i++)
+    {
+        sum += analogRead(TEMP_DATA_PIN);
+        delay(2);
+    }
+
+    float avg = sum / 10.0f;
+
+    float voltage = avg * (3.3f / 1024.0f);
+
+    return voltage * 100.0f;
+}
+
 // true if temperature sensor connected
 bool tmp_sensor_connected()
 {
@@ -18,7 +36,7 @@ bool tmp_sensor_connected()
     }
 
     float avg = sum / 20.0f;
-    float tmp = (avg * (1500.0 / 1024.0)) / 10.0;
+    float tmp = avg * (3.3f / 1024.0f) * 100.0f;
 
     Serial.print("[debug] min=");
     Serial.print(minv);
@@ -37,23 +55,6 @@ bool tmp_sensor_connected()
     return false;
 }
 
-// return temperature sensor reading in float
-float read_temp_sensor()
-{
-    long sum = 0;
-
-    for (int i = 0; i < 10; i++)
-    {
-        sum += analogRead(TEMP_DATA_PIN);
-        delay(2);
-    }
-
-    float avg = sum / 10.0f;
-
-    float voltage = avg * (3.3f / 1024.0f);
-
-    return voltage * 100.0f;
-}
 
 
 float read_arm_servo_angle()
@@ -114,7 +115,7 @@ bool check_drink_timer(unsigned long &start_time)
 //! dummy function
 void remind_drink()
 {
-
+    Serial.println("------water remind!");
 }
 
 // true if cup exist
@@ -158,24 +159,30 @@ void move_arm(Servo &servo, int arm_low_angle, char p)
     }
 }
 
-//! dummy function
-void move_fan(int &fan_servo_state)
+
+void move_fan(Servo &fanServo ,int &fan_servo_state)
 {
     if (fan_servo_state == 0)
     {
         // rotate the fan toward the cup.
+        fanServo.writeMicroseconds(1700);
         delay(1000);
+        // 停止
+        fanServo.writeMicroseconds(1500);
         fan_servo_state = 1;
     }
     else
     {
         // rotate the fan back.
+        fanServo.writeMicroseconds(1300);
         delay(1000);
+        // 停止
+        fanServo.writeMicroseconds(1500);
         fan_servo_state = 0;
     }
 }
 
-//! dummy function
+//! dummy
 void turn_on_off_fan(int &fan_motor_state)
 {
     if (fan_motor_state == 0)
@@ -183,24 +190,33 @@ void turn_on_off_fan(int &fan_motor_state)
         // turn on;
         delay(10);
         fan_motor_state = 1;
+        Serial.print("fan motor state now is: ");
+        Serial.print(fan_motor_state);
+        Serial.println("fan opened.");
     }
     else
     {
         // turn off
         delay(10);
         fan_motor_state = 0;
+        Serial.print("fan motor state now is: ");
+        Serial.print(fan_motor_state);
+        Serial.println("fan opened.");
     }
 }
 
 // do sequense of action depends on the temperature
-void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &servo)
+void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &armServo, Servo &fanServo)
 {
-    if (read_temp_sensor() > MIN_HOT_TEMP) // if cooling needed
+    Serial.println("entered check tmp fan");
+    float curTmp = read_temp_sensor();
+    if (curTmp > MIN_HOT_TEMP) // if cooling needed
     {
         if (arm_at_low(arm_low_angle))
         {
-            move_arm(servo, arm_low_angle, 'h');
-            move_fan(fan_servo_state);
+            Serial.println("starcting cooling!");
+            move_arm(armServo, arm_low_angle, 'h');
+            move_fan(fanServo ,fan_servo_state);
             turn_on_off_fan(fan_motor_state);
         }
     }
@@ -208,11 +224,10 @@ void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle,
     {
         if (arm_at_high(arm_low_angle))
         {
+            Serial.println("stopping cooling!");
             turn_on_off_fan(fan_motor_state);
-            move_fan(fan_servo_state);
-            move_arm(servo, arm_low_angle, 'l');
+            move_fan(fanServo ,fan_servo_state);
+            move_arm(armServo, arm_low_angle, 'l');
         }
     }
 }
-
-

@@ -26,10 +26,10 @@ bool arm_at_low(int arm_low_angle);
 bool arm_at_high(int arm_low_angle);
 void move_arm(Servo &servo, int arm_low_angle, char p);
 
-void move_fan(int &fan_servo_state);
+void move_fan(Servo &fanServo, int &fan_servo_state);
 void turn_on_off_fan(int &fan_motor_state);
 
-void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &servo);
+void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &servo, Servo &fanServo);
 
 
 
