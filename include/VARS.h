@@ -17,12 +17,12 @@ constexpr int SERVO_FB_MAX = 633;
 constexpr int FAN_MOTOR_CONTROL_PIN = D2;
 constexpr int FAN_SERVO_CONTROL_PIN = 9;
 
-constexpr int TEMP_DATA_PIN = A3;
-constexpr int MIN_HOT_TEMP = 27;
+constexpr int TEMP_DATA_PIN = A2;
+constexpr int MIN_HOT_TEMP = 23;
 
 constexpr unsigned long TIMER_THRESHOLD = 20UL * 60UL * 1000UL; // 20 min
 
-constexpr int MICROPHONE_DATA_PIN = A4;
+constexpr int MICROPHONE_DATA_PIN = A3;
 constexpr int MICROPHONE_THRESHOLD = 170;
 constexpr int MICROPHONE_DEBOUNCE_TIME = 300;
 constexpr int MICROPHONE_MIN_INTERVAL = 30;
