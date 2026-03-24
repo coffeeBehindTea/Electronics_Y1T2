@@ -149,12 +149,12 @@ void move_arm(Servo &servo, int arm_low_angle, char p)
 {
     if (p == 'h')
     {
-        set_servo_angle(servo, ARM_HIGH_ANGLE  + arm_low_angle);
+        set_servo_angle(servo, ARM_HIGH_ANGLE);
         delay(2000);
     }
     else if (p == 'l')
     {
-        set_servo_angle(servo, arm_low_angle);
+        set_servo_angle(servo, 135);
         delay(2000);
     }
 }
@@ -188,6 +188,7 @@ void turn_on_off_fan(int &fan_motor_state)
     if (fan_motor_state == 0)
     {
         // turn on;
+        digitalWrite(FAN_MOTOR_CONTROL_PIN, LOW);
         delay(10);
         fan_motor_state = 1;
         Serial.print("fan motor state now is: ");
@@ -197,11 +198,12 @@ void turn_on_off_fan(int &fan_motor_state)
     else
     {
         // turn off
+        digitalWrite(FAN_MOTOR_CONTROL_PIN, HIGH);
         delay(10);
         fan_motor_state = 0;
         Serial.print("fan motor state now is: ");
         Serial.print(fan_motor_state);
-        Serial.println("fan opened.");
+        Serial.println("fan offed.");
     }
 }
 

@@ -8,13 +8,13 @@ constexpr int FAN_ARM_STOP_SIGNAL = 1500;
 constexpr int FAN_ARM_BACKWARD_SIGNAL = 1300;
 constexpr int FAN_ARM_CONTROL_PIN = 9;
 
-constexpr int ARM_HIGH_ANGLE = 45;
-constexpr int ARM_SERVO_CONTROL_PIN = 8;
+constexpr int ARM_HIGH_ANGLE = 80;
+constexpr int ARM_SERVO_CONTROL_PIN = D8;
 constexpr int ARM_SERVO_FEEDBACK_PIN = A0;
 constexpr int SERVO_FB_MIN = 66;
 constexpr int SERVO_FB_MAX = 633;
 
-constexpr int FAN_MOTOR_CONTROL_PIN = D2;
+constexpr int FAN_MOTOR_CONTROL_PIN = D1;
 constexpr int FAN_SERVO_CONTROL_PIN = 9;
 
 constexpr int TEMP_DATA_PIN = A2;
