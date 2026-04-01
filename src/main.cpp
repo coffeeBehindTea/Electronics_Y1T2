@@ -4,6 +4,10 @@
 #include <Servo.h>
 #include <Arduino.h>
 #include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h"
+#include <ArduinoGraphics.h>
+#include <Arduino_LED_Matrix.h>
+
+ArduinoLEDMatrix matrix;
 
 /* ----------------------------- data structure ----------------------------- */
 enum KnockState
@@ -18,7 +22,7 @@ Servo armServo;
 Servo fanServo;
 
 /* ----------------------------- state variables ---------------------------- */
-int ARM_LOW_ANGLE = 0;
+int ARM_LOW_ANGLE = 130;
 int fan_servo_state = 0; // 0 is upward, 1 is toward the cup
 int fan_motor_state = 0; // 0 is stopped, 1 is rotating
 bool monitor_switch = false;
@@ -35,96 +39,108 @@ void updateDoubleKnock();
 void handleKnock(unsigned long now);
 void onDoubleKnockDetected();
 
+
+void showGoDrink()
+{
+    matrix.beginDraw();
+    matrix.stroke(0xFFFFFFFF);
+    matrix.textScrollSpeed(50);   // 数值越小越快
+
+    // x 从右边外侧开始，y=1 基本比较合适
+    matrix.beginText(12, 1, 0xFFFFFFFF);
+    matrix.print("GO DRINK");
+    matrix.endText(SCROLL_LEFT);
+
+    matrix.endDraw();
+}
+
+
 void setup()
 {
   Serial.begin(115200);
   Wire1.begin();
+  matrix.begin();
   pinMode(FAN_MOTOR_CONTROL_PIN, OUTPUT);
 
+  delay(5000);
   Serial.println("========system setup start========");
 
-  // Serial.println("[info] checking load cell...");
-  // while (loadCell.begin(Wire1) == false)
-  // {
-  //   Serial.println("[error] load cell connection fail !");
-  //   delay(1000);
-  // }
+  Serial.println("[info] checking load cell...");
+  while (loadCell.begin(Wire1) == false)
+  {
+    Serial.println("[error] load cell connection fail !");
+    delay(1000);
+  }
 
-  // Serial.println("[info] initializing load cell...");
-  // Serial.println("[info] Please ensure there's NOTHING on the mat");
+  Serial.println("[info] initializing load cell...");
+  Serial.println("[info] Please ensure there's NOTHING on the mat");
 
-  // for (int i = 5; i > 0; --i)
-  // {
-  //   Serial.print("count down: ");
-  //   Serial.println(i);
-  //   delay(1000);
-  // }
+  for (int i = 5; i > 0; --i)
+  {
+    Serial.print("count down: ");
+    Serial.println(i);
+    delay(1000);
+  }
 
-  // loadCell.setCalibrationFactor(CALIBRATION_FACTOR);
-  // loadCell.calculateZeroOffset();
-  // Serial.println("[info] load cell initialized.");
+  loadCell.setCalibrationFactor(CALIBRATION_FACTOR);
+  loadCell.calculateZeroOffset();
+  Serial.println("[info] load cell initialized.");
 
-  // Serial.println("[info] checking temperature sensor...");
+  Serial.println("[info] checking temperature sensor...");
   // while (!tmp_sensor_connected())
   // {
   //   Serial.println("[error] temperature sensor not connected !");
   //   delay(500);
   // }
-  // Serial.println("[info] temperature sensor initialized.");
+  Serial.println("[info] temperature sensor initialized.");
 
-  // Serial.println("[info] checking arm servo...");
-  // armServo.attach(ARM_SERVO_CONTROL_PIN);
-  // while (servo_connected())
-  // {
-  //   Serial.println("[error] arm servo not connected !");
-  //   delay(500);
-  // }
+  Serial.println("[info] checking arm servo...");
+  armServo.attach(ARM_SERVO_CONTROL_PIN);
+  while (servo_connected())
+  {
+    Serial.println("[error] arm servo not connected !");
+    delay(500);
+  }
 
+  Serial.print("move arm servo to default position: ");
+  set_servo_angle(armServo, ARM_LOW_ANGLE);
+  // set_servo_angle(armServo, 0);
+  Serial.println(ARM_LOW_ANGLE);
+  delay(2000);
 
-  // set_servo_angle(armServo, 135);
-  // delay(3000);
-  // ARM_LOW_ANGLE = read_arm_servo_angle();
-  // Serial.print("arm low angle = ");
-  // Serial.println(ARM_LOW_ANGLE);
-
-  // // initialize fan servo
+  // initialize fan servo
   // fanServo.attach(FAN_SERVO_CONTROL_PIN);
 
-  // Serial.println("[info] all components cheked.");
-  // Serial.println("[info] entering main loop.");
+  Serial.println("[info] all components cheked.");
+  Serial.println("[info] entering main loop.");
 
-  // delay(2000);
-  // Serial.println("goto high");
-  // move_arm(armServo, ARM_LOW_ANGLE, 'h');
-  // delay(2000);
-  // Serial.println("goto low");
-  // move_arm(armServo, ARM_LOW_ANGLE, 'l');
+  Serial.println("starcting cooling!");
+  move_arm(armServo, ARM_LOW_ANGLE, 'h');
+  // move_fan(fanServo, fan_servo_state);
+  turn_on_off_fan(fan_motor_state);
 
+  // showGoDrink();
 }
 
 void loop()
 {
-  turn_on_off_fan(fan_motor_state);
-  delay(2000);
-  // delay(2000);
-  // Serial.println("asdf");
-  // set_servo_angle(armServo, 90);
-  // delay(2000);
-  // Serial.println("fdsa");
-  // set_servo_angle(armServo, 0);
   /* -------------------------------------------------------------------------- */
   /*       linsten to the microphone here before the monitor switch check       */
   /* -------------------------------------------------------------------------- */
 
+  // Serial.print("load cell: ");
   // Serial.println(loadCell.getWeight());
+  // Serial.print("arm angle: ");
+  // Serial.println(read_arm_servo_angle());
 
-  // updateDoubleKnock();
+  updateDoubleKnock();
 
   // if (!monitor_switch)
   // {
   //   Serial.println("switch offed");
+  //   delay(1000);
   //   return;
-  // }
+  //}
   // Serial.println("=========== entered main loop ===========");
   // if (first_time_entry)
   // {
@@ -134,21 +150,21 @@ void loop()
   // }
 
   // // if cup leaved the mat, reset timer
-  // while (! cup_exist(loadCell))
+  // while (cup_exist(loadCell) == false)
   // {
   //   first_time_entry = true;
   //   delay(100);
   //   Serial.println("No cup detected!");
   // }
 
-  // check_temp_fan(fan_servo_state, fan_motor_state, ARM_LOW_ANGLE, armServo, fanServo);
+  // check_temp_fan(fan_servo_state, fan_motor_state, ARM_LOW_ANGLE, armServo, fanServo, loadCell);
 
   // // just need to remid drink, as in the next loop, if the cup is taken, the wile loop will trap it and wait until cup being put back.
   // // also checked cup exist here because during check_temp_fan actions, the system do not take inputs, so if user take cup away during action,
   // // no reminding needed here.
   // if (check_drink_timer(start_time) && cup_exist(loadCell))
   // {
-  //   remind_drink();
+  //   remind_drink(matrix);
   // }
 }
 
@@ -213,23 +229,3 @@ void onDoubleKnockDetected()
   Serial.print("monitor switch turned to ");
   Serial.println(monitor_switch);
 }
-
-// #include <Arduino.h>
-
-// int relayPin = 7;
-
-// void setup()
-// {
-//     pinMode(relayPin, OUTPUT);
-
-//     digitalWrite(relayPin, HIGH);  // 默认关闭继电器
-// }
-
-// void loop()
-// {
-//     digitalWrite(relayPin, LOW);   // 打开继电器
-//     delay(2000);
-
-//     digitalWrite(relayPin, HIGH);  // 关闭继电器
-//     delay(2000);
-// }

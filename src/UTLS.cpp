@@ -75,6 +75,8 @@ void set_servo_angle(Servo &servo, float angle)
     int pulse = 500 + angle * 2000.0 / 270.0;
 
     servo.writeMicroseconds(pulse);
+
+    // servo.write((int)angle);
 }
 
 // true if servo connected
@@ -112,10 +114,18 @@ bool check_drink_timer(unsigned long &start_time)
     return millis() - start_time >= TIMER_THRESHOLD;
 }
 
-//! dummy function
-void remind_drink()
+
+void remind_drink(ArduinoLEDMatrix &matrix)
 {
-    Serial.println("------water remind!");
+    matrix.beginDraw();
+    matrix.stroke(0xFFFFFFFF);
+    matrix.textScrollSpeed(70);
+
+    matrix.beginText(12, 1, 0xFFFFFFFF);
+    matrix.println("GO DRINK");
+    Serial.println("go drink!");
+    matrix.endText(SCROLL_LEFT);
+    matrix.endDraw();
 }
 
 // true if cup exist
@@ -141,7 +151,7 @@ bool arm_at_low(int arm_low_angle)
 // true if arm at high position
 bool arm_at_high(int arm_low_angle)
 {
-    return abs(read_arm_servo_angle() - arm_low_angle - ARM_HIGH_ANGLE) < 1.5 ? true : false;
+    return abs(read_arm_servo_angle() - ARM_HIGH_ANGLE) < 1.5 ? true : false;
 }
 
 // 'h' for move to high position, 'l' for move to low position
@@ -154,7 +164,7 @@ void move_arm(Servo &servo, int arm_low_angle, char p)
     }
     else if (p == 'l')
     {
-        set_servo_angle(servo, 135);
+        set_servo_angle(servo, arm_low_angle);
         delay(2000);
     }
 }
@@ -166,7 +176,7 @@ void move_fan(Servo &fanServo ,int &fan_servo_state)
     {
         // rotate the fan toward the cup.
         fanServo.writeMicroseconds(1700);
-        delay(1000);
+        delay(FAN_SERVO_MOVE_TIME);
         // 停止
         fanServo.writeMicroseconds(1500);
         fan_servo_state = 1;
@@ -175,20 +185,20 @@ void move_fan(Servo &fanServo ,int &fan_servo_state)
     {
         // rotate the fan back.
         fanServo.writeMicroseconds(1300);
-        delay(1000);
+        delay(FAN_SERVO_MOVE_TIME);
         // 停止
         fanServo.writeMicroseconds(1500);
         fan_servo_state = 0;
     }
 }
 
-//! dummy
+
 void turn_on_off_fan(int &fan_motor_state)
 {
     if (fan_motor_state == 0)
     {
         // turn on;
-        digitalWrite(FAN_MOTOR_CONTROL_PIN, LOW);
+        digitalWrite(FAN_MOTOR_CONTROL_PIN, HIGH);
         delay(10);
         fan_motor_state = 1;
         Serial.print("fan motor state now is: ");
@@ -198,7 +208,7 @@ void turn_on_off_fan(int &fan_motor_state)
     else
     {
         // turn off
-        digitalWrite(FAN_MOTOR_CONTROL_PIN, HIGH);
+        digitalWrite(FAN_MOTOR_CONTROL_PIN, LOW);
         delay(10);
         fan_motor_state = 0;
         Serial.print("fan motor state now is: ");
@@ -208,11 +218,15 @@ void turn_on_off_fan(int &fan_motor_state)
 }
 
 // do sequense of action depends on the temperature
-void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &armServo, Servo &fanServo)
+void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &armServo, Servo &fanServo, NAU7802 &loadCell)
 {
     Serial.println("entered check tmp fan");
-    float curTmp = read_temp_sensor();
-    if (curTmp > MIN_HOT_TEMP) // if cooling needed
+    // float curTmp = read_temp_sensor();
+    float cutTmp = 100;
+    Serial.print("arm angle: ");
+    Serial.println(read_arm_servo_angle());
+    Serial.println(arm_at_low(arm_low_angle));
+    if (arm_at_low(arm_low_angle)) // if cooling needed
     {
         if (arm_at_low(arm_low_angle))
         {

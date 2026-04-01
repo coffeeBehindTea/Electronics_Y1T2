@@ -6,6 +6,8 @@
 #include <climits>
 #include "VARS.h"
 #include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h"
+#include <ArduinoGraphics.h>
+#include <Arduino_LED_Matrix.h>
 
 
 bool tmp_sensor_connected();
@@ -17,7 +19,7 @@ bool servo_connected();
 
 void reset_drink_timer(unsigned long &start_time);
 bool check_drink_timer(unsigned long &start_time);
-void remind_drink();
+void remind_drink(ArduinoLEDMatrix &matrix);
 
 bool cup_exist(NAU7802 &loadCell);
 
@@ -29,7 +31,7 @@ void move_arm(Servo &servo, int arm_low_angle, char p);
 void move_fan(Servo &fanServo, int &fan_servo_state);
 void turn_on_off_fan(int &fan_motor_state);
 
-void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &servo, Servo &fanServo);
+void check_temp_fan(int fan_servo_state, int fan_motor_state, int arm_low_angle, Servo &servo, Servo &fanServo, NAU7802 &loadCell);
 
 
 
