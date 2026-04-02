@@ -61,10 +61,7 @@ float read_arm_servo_angle()
 {
     int v = analogRead(ARM_SERVO_FEEDBACK_PIN);
 
-    if (v < SERVO_FB_MIN) v = SERVO_FB_MIN;
-    if (v > SERVO_FB_MAX) v = SERVO_FB_MAX;
-
-    return (float)(v - SERVO_FB_MIN) * 270.0 / (SERVO_FB_MAX - SERVO_FB_MIN);
+    return (float)v * 0.47 -33.4;
 }
 
 void set_servo_angle(Servo &servo, float angle)
